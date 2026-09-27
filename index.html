@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🀄 麻雀収支計算＆成績管理アプリ</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-color: #00e676;
+            --accent-hover: #00c853;
+            --text-color: #ffffff;
+            --text-sub: #b0bec5;
+            --danger-color: #ff5252;
+            --border-color: #333333;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            text-align: center;
+            color: var(--accent-color);
+            margin: 0 0 16px 0;
+        }
+
+        /* タブナビゲーション */
+        .tab-nav {
+            display: flex;
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 4px;
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.2s;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: #000;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* 入力フォームスタイル */
+        .section-title {
+            font-size: 0.85rem;
+            color: var(--accent-color);
+            margin: 16px 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            color: var(--text-sub);
+        }
+
+        input, select {
+            background: #2a2a2a;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            width: 100%;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .player-row .p-name { width: 35%; }
+        .player-row .p-score { flex: 1; }
+        .player-row .p-chip { width: 25%; }
+
+        button.primary-btn {
+            width: 100%;
+            background: var(--accent-color);
+            color: #000;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.2s;
+        }
+
+        button.primary-btn:hover { background: var(--accent-hover); }
+
+        button.secondary-btn {
+            background: #333;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        /* 結果カード・テーブル */
+        .card {
+            background: #252525;
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .result-row:last-child { border-bottom: none; }
+
+        .plus { color: var(--accent-color); font-weight: bold; }
+        .minus { color: var(--danger-color); font-weight: bold; }
+
+        .error-msg {
+            color: var(--danger-color);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 10px;
+            background: rgba(255,82,82,0.1);
+            padding: 8px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stats-item {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stats-item .val { font-size: 1.2rem; font-weight: bold; margin-top: 4px; }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            background: #1a1a1a;
+            color: #aaa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.8rem;
+            resize: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🀄 麻雀収支計算＆成績管理</h1>
+
+    <!-- タブ切り替え -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('ruleTab')">⚙️ ルール設定</button>
+        <button class="tab-btn" onclick="switchTab('inputTab')">🀄 半荘入力</button>
+        <button class="tab-btn" onclick="switchTab('historyTab')">📊 履歴・トータル</button>
+    </div>
+
+    <!-- 1. ルール設定タブ -->
+    <div id="ruleTab" class="tab-content active">
+        <div class="section-title">👥 対局形式＆プレイヤー</div>
+        <div class="input-group">
+            <div class="input-field">
+                <label>ゲーム形式</label>
+                <select id="gameType" onchange="toggleGameType()">
+                    <option value="4">4人打ち（ヨンマ）</option>
+                    <option value="3">3人打ち（サンマ）</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="playerNamesContainer">
+            <!-- JavaScriptでプレイヤー名入力欄を動的生成 -->
+        </div>
+
+        <div class="section-title">⚙️ 点数＆オカ・ウマ設定</div>
+        <div class="input-group">
+            <div class="input-field">
+                <label>配給原点</label>
+                <input type="number" id="startPts" value="25000" step="1000">
+            </div>
+            <div class="input-field">
+                <label>返し点 (オカ基準)</label>
+                <input type="number" id="returnPts" value="30000" step="1000">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="input-field">
+                <label>ウマ (順位馬)</label>
+                <select id="umaSelect">
+                    <option value="10-30">ワンツー (10-30)</option>
+                    <option value="5-10">ゴジュウ (5-10)</option>
+                    <option value="10-20">ワンツー (10-20)</option>
+                    <option value="20-30">ツーフォー (20-30)</option>
+                    <option value="0-0">ウマなし (0-0)</option>
+                </select>
+            </div>
+            <div class="input-field">
+                <label>端数処理 (丸め)</label>
+                <select id="roundingSelect">
+                    <option value="gosha">五捨六入（Mリーグ／競技公式）</option>
+                    <option value="shisha">四捨五入</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-title">💰 レート＆チップ設定</div>
+        <div class="input-group">
+            <div class="input-field">
+                <label>レート (1ptあたり)</label>
+                <select id="rateSelect">
+                    <option value="50">テンゴ (50円)</option>
+                    <option value="100">テンピン (100円)</option>
+                    <option value="20">テンニ (20円)</option>
+                    <option value="10">テンイチ (10円)</option>
+                    <option value="200">テンリャンピン (200円)</option>
+                    <option value="0">ノーレート (0円)</option>
+                </select>
+            </div>
+            <div class="input-field">
+                <label>チップ (1枚あたり)</label>
+                <input type="number" id="chipRate" value="100" step="50">
+            </div>
+        </div>
+
+        <button class="primary-btn" onclick="saveRulesAndGoNext()">ルールを保存して入力へ 👉</button>
+    </div>
+
+    <!-- 2. 半荘入力タブ -->
+    <div id="inputTab" class="tab-content">
+        <div class="section-title">🀄 持ち点＆チップ入力</div>
+        <div id="scoresContainer">
+            <!-- JavaScriptで入力欄を生成 -->
+        </div>
+
+        <div id="errorMsg" class="error-msg"></div>
+
+        <button class="primary-btn" onclick="addGameResult()">この半荘を記録する 📝</button>
+
+        <!-- 直近の計算結果表示 -->
+        <div id="lastResultCard" class="card" style="margin-top:20px; display:none;">
+            <div class="section-title" style="margin-top:0;">📊 直近の半荘結果</div>
+            <div id="lastResultList"></div>
+        </div>
+    </div>
+
+    <!-- 3. 履歴・トータルタブ -->
+    <div id="historyTab" class="tab-content">
+        <div class="section-title">📊 累計成績トータル</div>
+        <div id="totalStatsContainer"></div>
+
+        <div class="section-title">💸 最終精算（送金リスト）</div>
+        <div class="card">
+            <div id="settlementList"></div>
+        </div>
+
+        <div class="section-title">📱 LINE共有用テキスト</div>
+        <textarea id="lineShareText" readonly></textarea>
+        <button class="secondary-btn" style="width:100%; margin-top:5px;" onclick="copyLineText()">テキストをコピー 📋</button>
+
+        <div class="section-title" style="margin-top:20px;">📜 半荘履歴</div>
+        <div id="historyList"></div>
+
+        <button class="secondary-btn" style="width:100%; color:var(--danger-color); margin-top:20px;" onclick="clearAllHistory()">全データをリセット 🗑️</button>
+    </div>
+</div>
+
+<script>
+    let appState = {
+        gameType: 4,
+        players: ["Aさん", "Bさん", "Cさん", "Dさん"],
+        startPts: 25000,
+        returnPts: 30000,
+        uma: [10, 30],
+        rounding: "gosha", // "gosha": 五捨六入, "shisha": 四捨五入
+        rate: 50,
+        chipRate: 100,
+        history: []
+    };
+
+    // 初期化
+    window.onload = function() {
+        loadData();
+        renderPlayerNameInputs();
+        renderScoreInputs();
+        updateUI();
+    };
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+
+        if(tabId === 'historyTab') renderHistoryAndStats();
+    }
+
+    function toggleGameType() {
+        const type = parseInt(document.getElementById('gameType').value);
+        appState.gameType = type;
+        if (type === 3 && appState.players.length === 4) {
+            appState.players = ["Aさん", "Bさん", "Cさん"];
+            document.getElementById('startPts').value = 35000;
+            document.getElementById('returnPts').value = 40000;
+        } else if (type === 4 && appState.players.length === 3) {
+            appState.players = ["Aさん", "Bさん", "Cさん", "Dさん"];
+            document.getElementById('startPts').value = 25000;
+            document.getElementById('returnPts').value = 30000;
+        }
+        renderPlayerNameInputs();
+        renderScoreInputs();
+    }
+
+    function renderPlayerNameInputs() {
+        const container = document.getElementById('playerNamesContainer');
+        container.innerHTML = '';
+        for (let i = 0; i < appState.gameType; i++) {
+            const div = document.createElement('div');
+            div.className = 'input-group';
+            div.innerHTML = `
+                <div class="input-field">
+                    <label>プレイヤー ${i+1}</label>
+                    <input type="text" class="rule-p-name" value="${appState.players[i] || 'プレイヤー'+(i+1)}">
+                </div>
+            `;
+            container.appendChild(div);
+        }
+    }
+
+    function renderScoreInputs() {
+        const container = document.getElementById('scoresContainer');
+        container.innerHTML = '';
+        for (let i = 0; i < appState.gameType; i++) {
+            const div = document.createElement('div');
+            div.className = 'player-row';
+            div.innerHTML = `
+                <span class="p-name" id="scoreNameLabel${i}">${appState.players[i]}</span>
+                <input type="number" class="p-score" placeholder="持ち点" step="100">
+                <input type="number" class="p-chip" placeholder="チップ枚" value="0">
+            `;
+            container.appendChild(div);
+        }
+    }
+
+    function saveRulesAndGoNext() {
+        const nameInputs = document.querySelectorAll('.rule-p-name');
+        appState.players = Array.from(nameInputs).map((input, i) => input.value || `P${i+1}`);
+        appState.startPts = parseInt(document.getElementById('startPts').value);
+        appState.returnPts = parseInt(document.getElementById('returnPts').value);
+        appState.rate = parseInt(document.getElementById('rateSelect').value);
+        appState.chipRate = parseInt(document.getElementById('chipRate').value);
+        appState.rounding = document.getElementById('roundingSelect').value;
+        
+        const umaVal = document.getElementById('umaSelect').value.split('-').map(Number);
+        appState.uma = umaVal;
+
+        saveData();
+        for (let i = 0; i < appState.gameType; i++) {
+            const label = document.getElementById(`scoreNameLabel${i}`);
+            if(label) label.innerText = appState.players[i];
+        }
+
+        switchTab('inputTab');
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.querySelectorAll('.tab-btn')[0].classList.remove('active');
+    }
+
+    // 【端数処理ロジック】五捨六入 vs 四捨五入
+    function roundPt(val, method) {
+        if (method === 'gosha') {
+            // 五捨六入: 0.5pt(500点)以下切り捨て、0.6pt(600点)以上切り上げ
+            if (val >= 0) {
+                return Math.round(val - 0.1);
+            } else {
+                return Math.round(val + 0.1);
+            }
+        } else {
+            // 四捨五入
+            return Math.round(val);
+        }
+    }
+
+    function addGameResult() {
+        const scoreInputs = document.querySelectorAll('.p-score');
+        const chipInputs = document.querySelectorAll('.p-chip');
+        const errorMsg = document.getElementById('errorMsg');
+
+        let rawScores = [];
+        let totalScore = 0;
+
+        for (let i = 0; i < appState.gameType; i++) {
+            const score = parseInt(scoreInputs[i].value);
+            const chip = parseInt(chipInputs[i].value) || 0;
+            if (isNaN(score)) {
+                errorMsg.innerText = "全員の持ち点を入力してね！";
+                errorMsg.style.display = 'block';
+                return;
+            }
+            rawScores.push({ name: appState.players[i], score, chip, originalIndex: i });
+            totalScore += score;
+        }
+
+        const expectedTotal = appState.startPts * appState.gameType;
+        if (totalScore !== expectedTotal) {
+            const diff = totalScore - expectedTotal;
+            errorMsg.innerText = `合計が ${totalScore.toLocaleString()} 点です！(${expectedTotal.toLocaleString()}点に対して ${diff > 0 ? '+'+diff : diff} 点ズレてます)`;
+            errorMsg.style.display = 'block';
+            return;
+        }
+        errorMsg.style.display = 'none';
+
+        // 順位ソート（同点の場合は入力順）
+        rawScores.sort((a, b) => b.score - a.score);
+
+        // ウマ・オカ配列の生成
+        const okaPts = ((appState.returnPts - appState.startPts) * appState.gameType) / 1000;
+        let umaArray = [];
+        if (appState.gameType === 4) {
+            umaArray = [appState.uma[1], appState.uma[0], -appState.uma[0], -appState.uma[1]];
+        } else {
+            umaArray = [appState.uma[1], 0, -appState.uma[1]];
+        }
+
+        // 2位以下のポイント計算（先に丸める）
+        let gameResult = [];
+        let subTotalPt = 0;
+
+        for (let i = 0; i < appState.gameType; i++) {
+            let rawPt = ((rawScores[i].score - appState.returnPts) / 1000) + umaArray[i];
+            if (i === 0) rawPt += okaPts; // 1位にはオカ加算
+
+            let roundedPt = 0;
+            if (i > 0) {
+                // 2位〜4位のポイントを端数処理（五捨六入 or 四捨五入）
+                roundedPt = roundPt(rawPt, appState.rounding);
+                subTotalPt += roundedPt;
+            }
+
+            gameResult.push({
+                name: rawScores[i].name,
+                rank: i + 1,
+                score: rawScores[i].score,
+                chip: rawScores[i].chip,
+                rawPt: rawPt,
+                pt: roundedPt // 1位は後で補正
+            });
+        }
+
+        // 1位のポイントを「プラマイゼロ」になるように逆算補正
+        gameResult[0].pt = -subTotalPt;
+
+        // 金額（現金）換算
+        gameResult.forEach(r => {
+            const ptMoney = r.pt * appState.rate;
+            const chipMoney = r.chip * appState.chipRate;
+            r.money = ptMoney + chipMoney;
+        });
+
+        // 履歴に追加
+        appState.history.push({
+            id: Date.now(),
+            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            results: gameResult
+        });
+
+        saveData();
+
+        // 画面描画
+        renderLastResult(gameResult);
+        scoreInputs.forEach(i => i.value = '');
+        chipInputs.forEach(i => i.value = '0');
+    }
+
+    function renderLastResult(results) {
+        const card = document.getElementById('lastResultCard');
+        const list = document.getElementById('lastResultList');
+        list.innerHTML = '';
+
+        results.forEach(p => {
+            const row = document.createElement('div');
+            row.className = 'result-row';
+            const isPlus = p.money >= 0;
+            row.innerHTML = `
+                <div><strong>${p.rank}位: ${p.name}</strong> (${p.score.toLocaleString()}点 / チップ${p.chip}枚)</div>
+                <div class="${isPlus ? 'plus' : 'minus'}">${p.pt > 0 ? '+'+p.pt : p.pt}pt (${isPlus ? '+'+p.money.toLocaleString() : p.money.toLocaleString()}円)</div>
+            `;
+            list.appendChild(row);
+        });
+        card.style.display = 'block';
+    }
+
+    function renderHistoryAndStats() {
+        const statsContainer = document.getElementById('totalStatsContainer');
+        const historyList = document.getElementById('historyList');
+        const settlementList = document.getElementById('settlementList');
+        const lineShareText = document.getElementById('lineShareText');
+
+        if (appState.history.length === 0) {
+            statsContainer.innerHTML = '<p style="text-align:center; color:#888;">対局データがありません。</p>';
+            historyList.innerHTML = '';
+            settlementList.innerHTML = '<p style="text-align:center; color:#888;">データなし</p>';
+            lineShareText.value = '';
+            return;
+        }
+
+        // 個人集計初期化
+        let totals = {};
+        appState.players.forEach(p => {
+            totals[p] = { pt: 0, money: 0, ranks: Array(appState.gameType).fill(0), games: 0 };
+        });
+
+        appState.history.forEach(game => {
+            game.results.forEach(r => {
+                if (!totals[r.name]) {
+                    totals[r.name] = { pt: 0, money: 0, ranks: Array(appState.gameType).fill(0), games: 0 };
+                }
+                totals[r.name].pt += r.pt;
+                totals[r.name].money += r.money;
+                totals[r.name].ranks[r.rank - 1]++;
+                totals[r.name].games++;
+            });
+        });
+
+        // 成績カード表示
+        statsContainer.innerHTML = '';
+        Object.keys(totals).forEach(name => {
+            const t = totals[name];
+            const avgRank = t.games > 0 ? (t.ranks.reduce((acc, count, i) => acc + count * (i + 1), 0) / t.games).toFixed(2) : '-';
+            const topRate = t.games > 0 ? ((t.ranks[0] / t.games) * 100).toFixed(1) : '0';
+            const isPlus = t.money >= 0;
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong style="font-size:1.1rem;">${name}</strong>
+                    <span class="${isPlus ? 'plus' : 'minus'}" style="font-size:1.1rem;">
+                        ${t.pt > 0 ? '+'+t.pt : t.pt}pt (${isPlus ? '+'+t.money.toLocaleString() : t.money.toLocaleString()}円)
+                    </span>
+                </div>
+                <div class="stats-grid">
+                    <div class="stats-item"><div>平均順位</div><div class="val">${avgRank}位</div></div>
+                    <div class="stats-item"><div>トップ率</div><div class="val">${topRate}%</div></div>
+                </div>
+            `;
+            statsContainer.appendChild(card);
+        });
+
+        // 最終精算（送金アルゴリズム）
+        let debtors = []; // 支払い側
+        let creditors = []; // 受け取り側
+        Object.keys(totals).forEach(name => {
+            const m = totals[name].money;
+            if (m < 0) debtors.push({ name, amount: -m });
+            else if (m > 0) creditors.push({ name, amount: m });
+        });
+
+        let transactions = [];
+        let dIdx = 0, cIdx = 0;
+
+        while (dIdx < debtors.length && cIdx < creditors.length) {
+            let debtor = debtors[dIdx];
+            let creditor = creditors[cIdx];
+            let payment = Math.min(debtor.amount, creditor.amount);
+
+            transactions.push(`${debtor.name} ➔ ${creditor.name}: ${payment.toLocaleString()}円`);
+
+            debtor.amount -= payment;
+            creditor.amount -= payment;
+
+            if (debtor.amount === 0) dIdx++;
+            if (creditor.amount === 0) cIdx++;
+        }
+
+        settlementList.innerHTML = transactions.length > 0 ? transactions.join('<br>') : '精算なし（プラマイゼロ）';
+
+        // LINE用テキスト生成
+        let lineMsg = `🀄 【麻雀精算結果】 (${appState.history.length}半荘)\n`;
+        lineMsg += `端数処理: ${appState.rounding === 'gosha' ? '五捨六入' : '四捨五入'}\n\n`;
+        lineMsg += `--- 個人トータル ---\n`;
+        Object.keys(totals).forEach(name => {
+            const t = totals[name];
+            const isPlus = t.money >= 0;
+            lineMsg += `${name}: ${t.pt > 0 ? '+'+t.pt : t.pt}pt (${isPlus ? '+'+t.money.toLocaleString() : t.money.toLocaleString()}円)\n`;
+        });
+        lineMsg += `\n--- 精算（送金リスト） ---\n`;
+        lineMsg += transactions.length > 0 ? transactions.join('\n') : '貸し借りなし';
+        lineShareText.value = lineMsg;
+
+        // 履歴リスト表示
+        historyList.innerHTML = '';
+        appState.history.slice().reverse().forEach((game, idx) => {
+            const gameNum = appState.history.length - idx;
+            const card = document.createElement('div');
+            card.className = 'card';
+            let html = `<div style="display:flex; justify-content:space-between; margin-bottom:6px; color:#888; font-size:0.8rem;">
+                <span>第${gameNum}半荘 (${game.date})</span>
+                <button onclick="deleteGame(${game.id})" style="background:none; border:none; color:var(--danger-color); cursor:pointer;">削除</button>
+            </div>`;
+            game.results.forEach(r => {
+                const isPlus = r.money >= 0;
+                html += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:2px;">
+                    <span>${r.rank}位: ${r.name} (${r.score.toLocaleString()}点)</span>
+                    <span class="${isPlus ? 'plus' : 'minus'}">${isPlus ? '+'+r.money : r.money}円</span>
+                </div>`;
+            });
+            card.innerHTML = html;
+            historyList.appendChild(card);
+        });
+    }
+
+    function deleteGame(id) {
+        if (confirm("この半荘の記録を削除しますか？")) {
+            appState.history = appState.history.filter(g => g.id !== id);
+            saveData();
+            renderHistoryAndStats();
+        }
+    }
+
+    function clearAllHistory() {
+        if (confirm("全対局データを削除してリセットしますか？")) {
+            appState.history = [];
+            saveData();
+            renderHistoryAndStats();
+            document.getElementById('lastResultCard').style.display = 'none';
+        }
+    }
+
+    function copyLineText() {
+        const textarea = document.getElementById('lineShareText');
+        textarea.select();
+        document.execCommand('copy');
+        alert("LINE共有用メッセージをコピーしました！✨");
+    }
+
+    function saveData() {
+        localStorage.setItem('mahjong_app_state', JSON.stringify(appState));
+    }
+
+    function loadData() {
+        const data = localStorage.getItem('mahjong_app_state');
+        if (data) {
+            appState = JSON.parse(data);
+            document.getElementById('gameType').value = appState.gameType;
+            document.getElementById('startPts').value = appState.startPts;
+            document.getElementById('returnPts').value = appState.returnPts;
+            document.getElementById('umaSelect').value = appState.uma.join('-');
+            document.getElementById('rateSelect').value = appState.rate;
+            document.getElementById('chipRate').value = appState.chipRate;
+            if (appState.rounding) {
+                document.getElementById('roundingSelect').value = appState.rounding;
+            }
+        }
+    }
+
+    function updateUI() {
+        toggleGameType();
+    }
+</script>
+
+</body>
+</html>
