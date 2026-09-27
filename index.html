@@ -38,7 +38,7 @@
         }
 
         h1 {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             text-align: center;
             color: var(--accent-color);
             margin: 0 0 16px 0;
@@ -51,18 +51,19 @@
             border-radius: 10px;
             padding: 4px;
             margin-bottom: 20px;
+            gap: 2px;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 10px 4px;
+            padding: 8px 2px;
             background: none;
             border: none;
             color: var(--text-sub);
             font-weight: bold;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 6px;
             transition: 0.2s;
             text-align: center;
         }
@@ -110,7 +111,7 @@
             color: #fff;
             padding: 10px;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             outline: none;
             width: 100%;
         }
@@ -122,20 +123,21 @@
         .player-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 10px;
         }
 
-        .player-row .p-name { width: 35%; }
-        .player-row .p-score { flex: 1; }
-        .player-row .p-chip { width: 25%; }
+        .player-row select.p-seat { width: 18%; }
+        .player-row select.p-name-select { width: 32%; }
+        .player-row input.p-score { flex: 1; }
+        .player-row input.p-chip { width: 20%; }
 
         button.primary-btn {
             width: 100%;
             background: var(--accent-color);
             color: #000;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 0.95rem;
             padding: 12px;
             border: none;
             border-radius: 10px;
@@ -188,7 +190,7 @@
             display: none;
         }
 
-        /* スマホ向けトータル成績スタイル */
+        /* 成績カードスタイル */
         .player-stats-card {
             background: #252525;
             padding: 12px;
@@ -240,6 +242,16 @@
             color: #fff;
             font-weight: bold;
         }
+
+        .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -247,16 +259,29 @@
 <div class="container">
     <h1>🀄 麻雀収支計算＆成績管理</h1>
 
-    <!-- タブ切り替え -->
+    <!-- 4タブ切り替え -->
     <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('ruleTab')">⚙️ ルール設定</button>
+        <button class="tab-btn active" onclick="switchTab('memberTab')">👥 メンバー</button>
+        <button class="tab-btn" onclick="switchTab('ruleTab')">⚙️ ルール</button>
         <button class="tab-btn" onclick="switchTab('inputTab')">🀄 半荘入力</button>
-        <button class="tab-btn" onclick="switchTab('historyTab')">📊 履歴・トータル</button>
+        <button class="tab-btn" onclick="switchTab('historyTab')">📊 トータル</button>
     </div>
 
-    <!-- 1. ルール設定タブ -->
-    <div id="ruleTab" class="tab-content active">
-        <div class="section-title">👥 対局形式＆プレイヤー</div>
+    <!-- 1. メンバーリストタブ -->
+    <div id="memberTab" class="tab-content active">
+        <div class="section-title">👥 メンバー登録・管理</div>
+        <div class="input-group">
+            <input type="text" id="newMemberName" placeholder="メンバー名を入力">
+            <button class="secondary-btn" style="width:100px; background:var(--accent-color); color:#000; font-weight:bold;" onclick="addMember()">追加</button>
+        </div>
+        <div id="memberList" style="margin-top:15px;">
+            <!-- メンバー一覧が動的表示されます -->
+        </div>
+    </div>
+
+    <!-- 2. ルール設定タブ -->
+    <div id="ruleTab" class="tab-content">
+        <div class="section-title">👥 対局形式＆参加メンバー</div>
         <div class="input-group">
             <div class="input-field">
                 <label>ゲーム形式</label>
@@ -268,7 +293,7 @@
         </div>
 
         <div id="playerNamesContainer">
-            <!-- JavaScriptでプレイヤー名入力欄を動的生成 -->
+            <!-- JavaScriptで対局メンバー選択プルダウンを動的生成 -->
         </div>
 
         <div class="section-title">⚙️ 点数＆オカ・ウマ設定</div>
@@ -325,9 +350,10 @@
         <button class="primary-btn" onclick="saveRulesAndGoNext()">ルールを保存して入力へ 👉</button>
     </div>
 
-    <!-- 2. 半荘入力タブ -->
+    <!-- 3. 半荘入力タブ -->
     <div id="inputTab" class="tab-content">
-        <div class="section-title">🀄 持ち点＆チップ入力</div>
+        <div class="section-title">🀄 家（席順）・持ち点・チップ入力</div>
+        <div style="font-size:0.75rem; color:var(--text-sub); margin-bottom:10px;">※同点の場合は起家（東家）に近い方が自動的に上位になります。</div>
         <div id="scoresContainer">
             <!-- JavaScriptで入力欄を生成 -->
         </div>
@@ -343,7 +369,7 @@
         </div>
     </div>
 
-    <!-- 3. 履歴・トータルタブ -->
+    <!-- 4. 履歴・トータルタブ -->
     <div id="historyTab" class="tab-content">
         <div class="section-title">📊 累計成績トータル</div>
         <div id="totalStatsContainer"></div>
@@ -363,19 +389,23 @@
 <script>
     let appState = {
         gameType: 4,
-        players: ["Aさん", "Bさん", "Cさん", "Dさん"],
+        memberPool: ["Aさん", "Bさん", "Cさん", "Dさん"], // 登録メンバー
+        players: ["Aさん", "Bさん", "Cさん", "Dさん"],     // 現在の対局メンバー
         startPts: 25000,
         returnPts: 30000,
         uma: [10, 30],
-        rounding: "gosha", // "gosha": 五捨六入, "shisha": 四捨五入
+        rounding: "gosha",
         rate: 50,
         chipRate: 100,
         history: []
     };
 
-    // 初期化
+    const seats4 = ["東", "南", "西", "北"];
+    const seats3 = ["東", "南", "西"];
+
     window.onload = function() {
         loadData();
+        renderMemberList();
         renderPlayerNameInputs();
         renderScoreInputs();
         updateUI();
@@ -391,15 +421,60 @@
         if(tabId === 'historyTab') renderHistoryAndStats();
     }
 
+    // --- メンバー管理 ---
+    function addMember() {
+        const input = document.getElementById('newMemberName');
+        const name = input.value.trim();
+        if (!name) return;
+        if (appState.memberPool.includes(name)) {
+            alert("すでに存在するメンバー名です");
+            return;
+        }
+        appState.memberPool.push(name);
+        input.value = '';
+        saveData();
+        renderMemberList();
+        renderPlayerNameInputs();
+        renderScoreInputs();
+    }
+
+    function deleteMember(name) {
+        if (confirm(`${name} さんを削除しますか？`)) {
+            appState.memberPool = appState.memberPool.filter(m => m !== name);
+            saveData();
+            renderMemberList();
+            renderPlayerNameInputs();
+            renderScoreInputs();
+        }
+    }
+
+    function renderMemberList() {
+        const container = document.getElementById('memberList');
+        container.innerHTML = '';
+        appState.memberPool.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'member-item';
+            div.innerHTML = `
+                <span>${m}</span>
+                <button onclick="deleteMember('${m}')" style="background:none; border:none; color:var(--danger-color); cursor:pointer;">削除</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // --- ルール＆プレイヤー選択 ---
     function toggleGameType() {
         const type = parseInt(document.getElementById('gameType').value);
         appState.gameType = type;
         if (type === 3 && appState.players.length === 4) {
-            appState.players = ["Aさん", "Bさん", "Cさん"];
+            appState.players = appState.players.slice(0, 3);
             document.getElementById('startPts').value = 35000;
             document.getElementById('returnPts').value = 40000;
         } else if (type === 4 && appState.players.length === 3) {
-            appState.players = ["Aさん", "Bさん", "Cさん", "Dさん"];
+            while(appState.players.length < 4) {
+                const nextMember = appState.memberPool.find(m => !appState.players.includes(m)) || `P${appState.players.length + 1}`;
+                appState.players.push(nextMember);
+            }
             document.getElementById('startPts').value = 25000;
             document.getElementById('returnPts').value = 30000;
         }
@@ -413,68 +488,88 @@
         for (let i = 0; i < appState.gameType; i++) {
             const div = document.createElement('div');
             div.className = 'input-group';
+            
+            let optionsHtml = '';
+            appState.memberPool.forEach(m => {
+                const selected = appState.players[i] === m ? 'selected' : '';
+                optionsHtml += `<option value="${m}" ${selected}>${m}</option>`;
+            });
+
             div.innerHTML = `
                 <div class="input-field">
                     <label>プレイヤー ${i+1}</label>
-                    <input type="text" class="rule-p-name" value="${appState.players[i] || 'プレイヤー'+(i+1)}">
+                    <select class="rule-p-select" onchange="updateSelectedPlayer(${i}, this.value)">
+                        ${optionsHtml}
+                    </select>
                 </div>
             `;
             container.appendChild(div);
         }
     }
 
+    function updateSelectedPlayer(index, value) {
+        appState.players[index] = value;
+        renderScoreInputs();
+    }
+
     function renderScoreInputs() {
         const container = document.getElementById('scoresContainer');
         container.innerHTML = '';
+        const seats = appState.gameType === 4 ? seats4 : seats3;
+
         for (let i = 0; i < appState.gameType; i++) {
             const div = document.createElement('div');
             div.className = 'player-row';
+
+            let seatOptions = '';
+            seats.forEach((s, idx) => {
+                const sel = idx === i ? 'selected' : '';
+                seatOptions += `<option value="${idx}" ${sel}>${s}</option>`;
+            });
+
+            let nameOptions = '';
+            appState.memberPool.forEach(m => {
+                const sel = appState.players[i] === m ? 'selected' : '';
+                nameOptions += `<option value="${m}" ${sel}>${m}</option>`;
+            });
+
             div.innerHTML = `
-                <span class="p-name" id="scoreNameLabel${i}">${appState.players[i]}</span>
+                <select class="p-seat">${seatOptions}</select>
+                <select class="p-name-select">${nameOptions}</select>
                 <input type="number" class="p-score" placeholder="持ち点" step="100">
-                <input type="number" class="p-chip" placeholder="チップ枚" value="0">
+                <input type="number" class="p-chip" placeholder="チップ" value="0">
             `;
             container.appendChild(div);
         }
     }
 
     function saveRulesAndGoNext() {
-        const nameInputs = document.querySelectorAll('.rule-p-name');
-        appState.players = Array.from(nameInputs).map((input, i) => input.value || `P${i+1}`);
+        const selectInputs = document.querySelectorAll('.rule-p-select');
+        appState.players = Array.from(selectInputs).map(s => s.value);
         appState.startPts = parseInt(document.getElementById('startPts').value);
         appState.returnPts = parseInt(document.getElementById('returnPts').value);
         appState.rate = parseInt(document.getElementById('rateSelect').value);
         appState.chipRate = parseInt(document.getElementById('chipRate').value);
         appState.rounding = document.getElementById('roundingSelect').value;
-        
-        const umaVal = document.getElementById('umaSelect').value.split('-').map(Number);
-        appState.uma = umaVal;
+        appState.uma = document.getElementById('umaSelect').value.split('-').map(Number);
 
         saveData();
-        for (let i = 0; i < appState.gameType; i++) {
-            const label = document.getElementById(`scoreNameLabel${i}`);
-            if(label) label.innerText = appState.players[i];
-        }
+        renderScoreInputs();
 
         switchTab('inputTab');
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.querySelectorAll('.tab-btn')[0].classList.remove('active');
     }
 
-    // 【端数処理ロジック】五捨六入 vs 四捨五入
     function roundPt(val, method) {
         if (method === 'gosha') {
-            if (val >= 0) {
-                return Math.round(val - 0.1);
-            } else {
-                return Math.round(val + 0.1);
-            }
+            return val >= 0 ? Math.round(val - 0.1) : Math.round(val + 0.1);
         } else {
             return Math.round(val);
         }
     }
 
     function addGameResult() {
+        const seatSelects = document.querySelectorAll('.p-seat');
+        const nameSelects = document.querySelectorAll('.p-name-select');
         const scoreInputs = document.querySelectorAll('.p-score');
         const chipInputs = document.querySelectorAll('.p-chip');
         const errorMsg = document.getElementById('errorMsg');
@@ -485,12 +580,15 @@
         for (let i = 0; i < appState.gameType; i++) {
             const score = parseInt(scoreInputs[i].value);
             const chip = parseInt(chipInputs[i].value) || 0;
+            const seatIdx = parseInt(seatSelects[i].value);
+            const name = nameSelects[i].value;
+
             if (isNaN(score)) {
                 errorMsg.innerText = "全員の持ち点を入力してね！";
                 errorMsg.style.display = 'block';
                 return;
             }
-            rawScores.push({ name: appState.players[i], score, chip, originalIndex: i });
+            rawScores.push({ name, score, chip, seatIdx });
             totalScore += score;
         }
 
@@ -503,19 +601,18 @@
         }
         errorMsg.style.display = 'none';
 
-        // 順位ソート（同点の場合は入力順）
-        rawScores.sort((a, b) => b.score - a.score);
+        // 順位ソート：点数が高い順。同点の場合は seatIdx（0:東, 1:南, 2:西, 3:北）が小さい順（起家順）
+        rawScores.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.seatIdx - b.seatIdx;
+        });
 
-        // ウマ・オカ配列の生成
+        // ウマ・オカ計算
         const okaPts = ((appState.returnPts - appState.startPts) * appState.gameType) / 1000;
-        let umaArray = [];
-        if (appState.gameType === 4) {
-            umaArray = [appState.uma[1], appState.uma[0], -appState.uma[0], -appState.uma[1]];
-        } else {
-            umaArray = [appState.uma[1], 0, -appState.uma[1]];
-        }
+        let umaArray = appState.gameType === 4 
+            ? [appState.uma[1], appState.uma[0], -appState.uma[0], -appState.uma[1]]
+            : [appState.uma[1], 0, -appState.uma[1]];
 
-        // 2位以下のポイント計算（先に丸める）
         let gameResult = [];
         let subTotalPt = 0;
 
@@ -534,22 +631,16 @@
                 rank: i + 1,
                 score: rawScores[i].score,
                 chip: rawScores[i].chip,
-                rawPt: rawPt,
                 pt: roundedPt
             });
         }
 
-        // 1位のポイントを「プラマイゼロ」になるように逆算補正
         gameResult[0].pt = -subTotalPt;
 
-        // 金額（現金）換算
         gameResult.forEach(r => {
-            const ptMoney = r.pt * appState.rate;
-            const chipMoney = r.chip * appState.chipRate;
-            r.money = ptMoney + chipMoney;
+            r.money = (r.pt * appState.rate) + (r.chip * appState.chipRate);
         });
 
-        // 履歴に追加
         appState.history.push({
             id: Date.now(),
             date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -557,8 +648,6 @@
         });
 
         saveData();
-
-        // 画面描画
         renderLastResult(gameResult);
         scoreInputs.forEach(i => i.value = '');
         chipInputs.forEach(i => i.value = '0');
@@ -574,7 +663,7 @@
             row.className = 'result-row';
             const isPlus = p.money >= 0;
             row.innerHTML = `
-                <div><strong>${p.rank}位: ${p.name}</strong> (${p.score.toLocaleString()}点 / チップ${p.chip}枚)</div>
+                <div><strong>${p.rank}位: ${p.name}</strong> (${p.score.toLocaleString()}点)</div>
                 <div class="${isPlus ? 'plus' : 'minus'}">${p.pt > 0 ? '+'+p.pt : p.pt}pt (${isPlus ? '+'+p.money.toLocaleString() : p.money.toLocaleString()}円)</div>
             `;
             list.appendChild(row);
@@ -594,16 +683,15 @@
             return;
         }
 
-        // 個人集計初期化
         let totals = {};
-        appState.players.forEach(p => {
-            totals[p] = { pt: 0, money: 0, ranks: Array(appState.gameType).fill(0), games: 0 };
+        appState.memberPool.forEach(p => {
+            totals[p] = { pt: 0, money: 0, ranks: Array(4).fill(0), games: 0 };
         });
 
         appState.history.forEach(game => {
             game.results.forEach(r => {
                 if (!totals[r.name]) {
-                    totals[r.name] = { pt: 0, money: 0, ranks: Array(appState.gameType).fill(0), games: 0 };
+                    totals[r.name] = { pt: 0, money: 0, ranks: Array(4).fill(0), games: 0 };
                 }
                 totals[r.name].pt += r.pt;
                 totals[r.name].money += r.money;
@@ -612,14 +700,14 @@
             });
         });
 
-        // スマホ向けスタイリッシュな成績表示
         statsContainer.innerHTML = '';
         Object.keys(totals).forEach(name => {
             const t = totals[name];
-            const avgRank = t.games > 0 ? (t.ranks.reduce((acc, count, i) => acc + count * (i + 1), 0) / t.games).toFixed(2) : '-';
+            if (t.games === 0) return; // 対局がないメンバーは表示スキップ
+
+            const avgRank = (t.ranks.reduce((acc, count, i) => acc + count * (i + 1), 0) / t.games).toFixed(2);
             const isPlus = t.money >= 0;
 
-            // 順位回数バッジHTMLの動的生成
             let rankBadgesHtml = '';
             for (let r = 0; r < appState.gameType; r++) {
                 rankBadgesHtml += `<div class="rank-badge">${r+1}着: <span>${t.ranks[r]}</span>回</div>`;
@@ -629,7 +717,7 @@
             card.className = 'player-stats-card';
             card.innerHTML = `
                 <div class="stats-header">
-                    <span class="stats-name">${name}</span>
+                    <span class="stats-name">${name} (${t.games}戦)</span>
                     <div class="stats-total-val ${isPlus ? 'plus' : 'minus'}">
                         ${t.pt > 0 ? '+'+t.pt : t.pt}pt (${isPlus ? '+'+t.money.toLocaleString() : t.money.toLocaleString()}円)
                     </div>
@@ -646,7 +734,7 @@
             statsContainer.appendChild(card);
         });
 
-        // 最終精算（送金アルゴリズム）
+        // 精算アルゴリズム
         let debtors = [];
         let creditors = [];
         Object.keys(totals).forEach(name => {
@@ -674,7 +762,7 @@
 
         settlementList.innerHTML = transactions.length > 0 ? transactions.join('<br>') : '精算なし（プラマイゼロ）';
 
-        // 履歴リスト表示
+        // 履歴表示
         historyList.innerHTML = '';
         appState.history.slice().reverse().forEach((game, idx) => {
             const gameNum = appState.history.length - idx;
@@ -721,6 +809,7 @@
         const data = localStorage.getItem('mahjong_app_state');
         if (data) {
             appState = JSON.parse(data);
+            if (!appState.memberPool) appState.memberPool = ["Aさん", "Bさん", "Cさん", "Dさん"];
             document.getElementById('gameType').value = appState.gameType;
             document.getElementById('startPts').value = appState.startPts;
             document.getElementById('returnPts').value = appState.returnPts;
