@@ -345,6 +345,10 @@
                 <label>チップ (1枚あたり)</label>
                 <input type="number" id="chipRate" value="100" step="50">
             </div>
+            <div class="input-field">
+                <label>チップ基準枚数</label>
+                <input type="number" id="chipBase" value="0" step="1" placeholder="配給枚数">
+            </div>
         </div>
 
         <button class="primary-btn" onclick="saveRulesAndGoNext()">ルールを保存して入力へ 👉</button>
@@ -397,6 +401,7 @@
         rounding: "gosha",
         rate: 50,
         chipRate: 100,
+        chipBase: 0, // チップ基準枚数
         history: []
     };
 
@@ -533,11 +538,13 @@
                 nameOptions += `<option value="${m}" ${sel}>${m}</option>`;
             });
 
+            const defaultChipVal = appState.chipBase || 0;
+
             div.innerHTML = `
                 <select class="p-seat">${seatOptions}</select>
                 <select class="p-name-select">${nameOptions}</select>
                 <input type="number" class="p-score" placeholder="持ち点" step="100">
-                <input type="number" class="p-chip" placeholder="チップ" value="0">
+                <input type="number" class="p-chip" placeholder="チップ" value="${defaultChipVal}">
             `;
             container.appendChild(div);
         }
@@ -550,6 +557,7 @@
         appState.returnPts = parseInt(document.getElementById('returnPts').value);
         appState.rate = parseInt(document.getElementById('rateSelect').value);
         appState.chipRate = parseInt(document.getElementById('chipRate').value);
+        appState.chipBase = parseInt(document.getElementById('chipBase').value) || 0;
         appState.rounding = document.getElementById('roundingSelect').value;
         appState.uma = document.getElementById('umaSelect').value.split('-').map(Number);
 
@@ -579,7 +587,9 @@
 
         for (let i = 0; i < appState.gameType; i++) {
             const score = parseInt(scoreInputs[i].value);
-            const chip = parseInt(chipInputs[i].value) || 0;
+            const chipInputVal = parseInt(chipInputs[i].value) || 0;
+            // 純増減チップ枚数 = (入力枚数 - 基準枚数)
+            const chipDiff = chipInputVal - (appState.chipBase || 0);
             const seatIdx = parseInt(seatSelects[i].value);
             const name = nameSelects[i].value;
 
@@ -588,7 +598,7 @@
                 errorMsg.style.display = 'block';
                 return;
             }
-            rawScores.push({ name, score, chip, seatIdx });
+            rawScores.push({ name, score, chip: chipDiff, seatIdx });
             totalScore += score;
         }
 
@@ -650,7 +660,7 @@
         saveData();
         renderLastResult(gameResult);
         scoreInputs.forEach(i => i.value = '');
-        chipInputs.forEach(i => i.value = '0');
+        chipInputs.forEach(i => i.value = appState.chipBase || 0);
     }
 
     function renderLastResult(results) {
@@ -662,8 +672,9 @@
             const row = document.createElement('div');
             row.className = 'result-row';
             const isPlus = p.money >= 0;
+            const chipStr = p.chip >= 0 ? `+${p.chip}` : `${p.chip}`;
             row.innerHTML = `
-                <div><strong>${p.rank}位: ${p.name}</strong> (${p.score.toLocaleString()}点)</div>
+                <div><strong>${p.rank}位: ${p.name}</strong> (${p.score.toLocaleString()}点 / チップ${chipStr}枚)</div>
                 <div class="${isPlus ? 'plus' : 'minus'}">${p.pt > 0 ? '+'+p.pt : p.pt}pt (${isPlus ? '+'+p.money.toLocaleString() : p.money.toLocaleString()}円)</div>
             `;
             list.appendChild(row);
@@ -703,7 +714,7 @@
         statsContainer.innerHTML = '';
         Object.keys(totals).forEach(name => {
             const t = totals[name];
-            if (t.games === 0) return; // 対局がないメンバーは表示スキップ
+            if (t.games === 0) return;
 
             const avgRank = (t.ranks.reduce((acc, count, i) => acc + count * (i + 1), 0) / t.games).toFixed(2);
             const isPlus = t.money >= 0;
@@ -774,8 +785,9 @@
             </div>`;
             game.results.forEach(r => {
                 const isPlus = r.money >= 0;
+                const chipStr = r.chip >= 0 ? `+${r.chip}` : `${r.chip}`;
                 html += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:2px;">
-                    <span>${r.rank}位: ${r.name} (${r.score.toLocaleString()}点)</span>
+                    <span>${r.rank}位: ${r.name} (${r.score.toLocaleString()}点 / チップ${chipStr}枚)</span>
                     <span class="${isPlus ? 'plus' : 'minus'}">${isPlus ? '+'+r.money : r.money}円</span>
                 </div>`;
             });
@@ -816,6 +828,7 @@
             document.getElementById('umaSelect').value = appState.uma.join('-');
             document.getElementById('rateSelect').value = appState.rate;
             document.getElementById('chipRate').value = appState.chipRate;
+            document.getElementById('chipBase').value = appState.chipBase || 0;
             if (appState.rounding) {
                 document.getElementById('roundingSelect').value = appState.rounding;
             }
